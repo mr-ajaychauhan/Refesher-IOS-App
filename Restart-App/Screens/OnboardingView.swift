@@ -8,13 +8,19 @@
 import SwiftUI
 
 struct OnboardingView: View {
+    
+    //MARK: - PROPERTY
     @AppStorage("onboarding") var isOnboardingViewActive : Bool = true
+    @State private var buttonWidth : Double = UIScreen.main.bounds.width - 80
+    @State private var buttonOffset: CGFloat = 0
+    @State private var isAnimating:Bool = false
+    
     var body: some View {
         ZStack  {
             Color("ColorBlue")
                 .ignoresSafeArea(.all,edges: .all)
             VStack(spacing:20){
-                //HEADER
+                //MARK: - HEADER
                 
                 Spacer()
                 VStack(spacing: 0){
@@ -30,26 +36,24 @@ struct OnboardingView: View {
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal,10)
-                } //:VSTACK ---> :HEADER
+                }// VSTACK - HEADER
+                .opacity(isAnimating ? 1 : 0)
+                .offset(y:isAnimating ? 1 : -40)
+                .animation(.easeInOut(duration: 1), value: isAnimating)
                 
-                //CENTER
+                //MARK: - CENTER
                 
                 ZStack{
-                    ZStack{
-                        Circle()
-                            .stroke(.white.opacity(0.2),lineWidth: 40)
-                            .frame(width: 260,height: 260,alignment: .center)
-                        Circle()
-                            .stroke(.white.opacity(0.2),lineWidth: 80)
-                            .frame(width: 260,height: 260,alignment: .center)
-                    }
+                    CircleGroupView(ShapeColor: .white, ShapeOpacity: 0.2)
                     Image("character-1")
                         .resizable()
                         .scaledToFit()
-                }//:ZSTACK ----> :CENTER
+                        .opacity(isAnimating ? 1 : 0)
+                        .animation(.easeInOut(duration: 0.5), value: isAnimating)
+                }//ZSTACK ----> CENTER
                 
                 Spacer()
-                //FOOTER
+                //MARK: - FOOTER
                 
                 ZStack{
                     //......1.BACKGROUND STATIC
@@ -71,7 +75,7 @@ struct OnboardingView: View {
                     HStack{
                         Capsule()
                             .fill(Color("ColorRed"))
-                            .frame(width: 80)
+                            .frame(width: buttonOffset + 80)
                         
                         Spacer()
                     }
@@ -90,23 +94,42 @@ struct OnboardingView: View {
                         }
                         .foregroundColor(.white)
                         .frame(width: 80,height: 80,alignment: .center)
-                        .onTapGesture {
-                            isOnboardingViewActive = false
-                        }
+                        .offset(x:buttonOffset)
+                        .gesture(
+                            DragGesture()
+                                .onChanged{ getrure in
+                                    if getrure.translation.width > 0 && buttonOffset <= buttonWidth - 80 {
+                                        buttonOffset = getrure.translation.width
+                                    }
+                                }
+                                .onEnded{ _ in
+                                    withAnimation(Animation.easeOut(duration: 0.4)){
+                                        if buttonOffset > buttonWidth / 2 {
+                                            buttonOffset = buttonWidth - 80
+                                            isOnboardingViewActive = false
+                                        }else{
+                                            buttonOffset = 0
+                                        }
+                                    }
+                                }
+                        )//: GESTURE
                         Spacer()
-                    }
-                    
-                }
-                .frame(height:80,alignment:.center )
+                    } //: HSTACK
+                } //: VSTACK FOOTER
+                .frame(width:buttonWidth,height:80,alignment:.center )
                 .padding()
-                
-                
-                
-                
+                .opacity(isAnimating ? 1 : 0)
+                .offset(y:isAnimating ? 1 : -40)
+                .animation(.easeInOut(duration: 1), value: isAnimating)
             } //:VSTACK
         } //:ZSTACK
+        .onAppear(perform: {
+            isAnimating = true
+        })
     }
 }
+
+//MARK: - PREVIEW
 
 struct OnboardingView_Previews: PreviewProvider {
     static var previews: some View {
